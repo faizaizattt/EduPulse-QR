@@ -1,7 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -16,40 +13,39 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  // Fungsi login (sementara menggunakan API Reqres)
-  Future<Map<String, dynamic>> realLogin(String email, String password) async {
-    final url = Uri.parse('https://reqres.in/api/login');
+  // Mock users
+  final Map<String, Map<String, String>> mockUsers = {
+    'teacher@edu.com': {
+      'password': '123456',
+      'name': 'Guru Contoh',
+      'role': 'teacher',
+    },
+    'parent@edu.com': {
+      'password': '123456',
+      'name': 'Ibu Bapa Contoh',
+      'role': 'parent',
+    },
+  };
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      );
+  // Fungsi login mock
+  Future<Map<String, dynamic>> mockLogin(String email, String password) async {
+    await Future.delayed(const Duration(seconds: 1)); // simulate network delay
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        // Contoh data pengguna (sementara)
+    if (mockUsers.containsKey(email)) {
+      if (mockUsers[email]!['password'] == password) {
         return {
           'status': true,
-          'token': data['token'],
+          'token': 'mock_token_123456', // fake token
           'user': {
-            'name': 'Guru Contoh',
-            'role': email.contains("parent") ? 'parent' : 'teacher',
+            'name': mockUsers[email]!['name'],
+            'role': mockUsers[email]!['role'],
           },
         };
       } else {
-        final data = jsonDecode(response.body);
-        return {
-          'status': false,
-          'message': data['error'] ?? 'Ralat log masuk',
-        };
+        return {'status': false, 'message': 'Kata laluan salah'};
       }
-    } on SocketException {
-      return {'status': false, 'message': 'Tiada sambungan internet'};
-    } catch (e) {
-      return {'status': false, 'message': 'Ralat sistem: $e'};
+    } else {
+      return {'status': false, 'message': 'Emel tidak ditemui'};
     }
   }
 
@@ -66,24 +62,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    final response = await realLogin(email, password);
+    final response = await mockLogin(email, password);
 
     setState(() => _isLoading = false);
 
     if (response['status']) {
-      // Simpan token
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', response['token']);
+      await prefs.setString('role', response['user']['role']);
+
+      String role = response['user']['role'];
+      String name = response['user']['name'];
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Selamat datang, ${response['user']['name']}')),
+        SnackBar(content: Text('Selamat datang, $name')),
       );
 
-      // Arahkan mengikut peranan
-      if (response['user']['role'] == 'parent') {
-        Navigator.pushReplacementNamed(context, '/parent_dashboard');
-      } else {
+      // ✅ Navigate berdasarkan peranan
+      if (role == 'teacher') {
         Navigator.pushReplacementNamed(context, '/teacher_dashboard');
+      } else if (role == 'parent') {
+        Navigator.pushReplacementNamed(context, '/select_child_screen');
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

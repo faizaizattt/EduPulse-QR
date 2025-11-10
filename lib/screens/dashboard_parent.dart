@@ -59,7 +59,7 @@ class ParentDashboardScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Papan Pemuka Ibu Bapa'),
+        title: const Text('Dashboard Ibu Bapa'),
         backgroundColor: Colors.blueAccent,
         actions: [
           IconButton(

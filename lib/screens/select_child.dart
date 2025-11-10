@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dashboard_parent.dart';
 
 class Child {
   final String name;
@@ -32,14 +31,14 @@ class SelectChildScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Pilih Anak'), backgroundColor: Colors.blueAccent),
+      appBar: AppBar(title: const Text('Pilih Pelajar'), backgroundColor: Colors.blueAccent),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Sila pilih anak anda:',
+              'Pilih pelajar yang anda ingin melihat maklumatnya:',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),

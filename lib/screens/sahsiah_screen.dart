@@ -8,13 +8,15 @@ class SahsiahScreen extends StatefulWidget {
   State<SahsiahScreen> createState() => _SahsiahScreenState();
 }
 
-class _SahsiahScreenState extends State<SahsiahScreen> {
+class _SahsiahScreenState extends State<SahsiahScreen>
+    with TickerProviderStateMixin {
   // Sample data - in production this would come from a database/API
   late DailyBehaviorStats stats;
   late List<BehaviorRecord> records;
   late List<StudentBehaviorStats> studentStats;
 
-  int _selectedTabIndex = 0; // 0 for Rekod, 1 for Carta Kedudukan
+  late TabController _tabController;
+  late TabController _cartaTabController;
   int _selectedCartaSubsection = 0; // 0 for Semua, 1 for Kelas, 2 for Tahun
   String? _selectedClass;
   String? _selectedYear;
@@ -22,7 +24,16 @@ class _SahsiahScreenState extends State<SahsiahScreen> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _cartaTabController = TabController(length: 3, vsync: this);
     _initializeSampleData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _cartaTabController.dispose();
+    super.dispose();
   }
 
   void _initializeSampleData() {
@@ -163,133 +174,34 @@ class _SahsiahScreenState extends State<SahsiahScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // App Title (left-aligned with QR logo)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                const Icon(Icons.qr_code_2, size: 40, color: Colors.indigo),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'EduPulse',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.indigo,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Portal Guru',
-                      style: TextStyle(fontSize: 12, color: Colors.indigo),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Main Section Title
-            const Text(
-              'Sahsiah Diri Murid',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Sistem mata berasaskan tingkah laku',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Tab Selection
-            _buildTabSelection(),
-            const SizedBox(height: 20),
-
-            // Content based on selected tab
-            if (_selectedTabIndex == 0)
-              _buildRekodSection()
-            else
-              _buildCartaSection(),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sahsiah Diri Murid'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Rekod'),
+            Tab(text: 'Carta Kedudukan'),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTabSelection() {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedTabIndex = 0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: _selectedTabIndex == 0
-                        ? Colors.indigo
-                        : Colors.transparent,
-                    width: 3,
-                  ),
-                ),
-              ),
-              child: Text(
-                'Rekod',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: _selectedTabIndex == 0 ? Colors.indigo : Colors.grey,
-                ),
-              ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: _buildRekodSection(),
             ),
           ),
-        ),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedTabIndex = 1),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: _selectedTabIndex == 1
-                        ? Colors.indigo
-                        : Colors.transparent,
-                    width: 3,
-                  ),
-                ),
-              ),
-              child: Text(
-                'Carta Kedudukan',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: _selectedTabIndex == 1 ? Colors.indigo : Colors.grey,
-                ),
-              ),
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: _buildCartaSection(),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -340,104 +252,27 @@ class _SahsiahScreenState extends State<SahsiahScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Carta subsection selection
-        _buildCartaSubsectionSelection(),
+        // Carta subsection tabs
+        TabBar(
+          controller: _cartaTabController,
+          tabs: const [
+            Tab(text: 'Semua Pelajar'),
+            Tab(text: 'Mengikut Kelas'),
+            Tab(text: 'Mengikut Tahun'),
+          ],
+          onTap: (index) => setState(() => _selectedCartaSubsection = index),
+        ),
         const SizedBox(height: 20),
-
-        // Student list based on selected subsection
-        _buildStudentsList(),
-      ],
-    );
-  }
-
-  Widget _buildCartaSubsectionSelection() {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedCartaSubsection = 0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: _selectedCartaSubsection == 0
-                        ? Colors.indigo
-                        : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-              ),
-              child: Text(
-                'Semua Pelajar',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: _selectedCartaSubsection == 0
-                      ? Colors.indigo
-                      : Colors.grey,
-                ),
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedCartaSubsection = 1),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: _selectedCartaSubsection == 1
-                        ? Colors.indigo
-                        : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-              ),
-              child: Text(
-                'Mengikut Kelas',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: _selectedCartaSubsection == 1
-                      ? Colors.indigo
-                      : Colors.grey,
-                ),
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedCartaSubsection = 2),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: _selectedCartaSubsection == 2
-                        ? Colors.indigo
-                        : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-              ),
-              child: Text(
-                'Mengikut Tahun',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: _selectedCartaSubsection == 2
-                      ? Colors.indigo
-                      : Colors.grey,
-                ),
-              ),
-            ),
+        // TabBarView for swipe gesture between subsections
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: TabBarView(
+            controller: _cartaTabController,
+            children: [
+              _buildStudentsList(),
+              _buildStudentsList(),
+              _buildStudentsList(),
+            ],
           ),
         ),
       ],
